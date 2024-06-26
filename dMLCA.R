@@ -123,125 +123,6 @@ d2lldab2.C <- function(w, lambda, x, K){
   hess
 }
 
-## 1,2-order derivatives of beta
-## x is the covariate matrix, no intercept.
-dLL2dBeta_BR.C <- function(w,lambda, x, K) {
-  ## x must be a matrix.
-  C <- dim(lambda)[2]
-  numx <- dim(x)[2]
-  dbeta_vec <-  .C("d2lldbeta2_Ksites_BR",
-                   as.integer(K),
-                   as.double(t(w)),
-                   as.double(t(lambda)),
-                   as.double(t(x)),
-                   as.integer(dim(x)[1]/K),
-                   as.integer(C),
-                   as.integer(numx),
-                   grad = double((C-1)*numx),
-                   hess = double(((C-1)*numx)^2)                
-  )
-  list(grad=dbeta_vec$grad,hess=matrix(dbeta_vec$hess,ncol=((C-1)*numx),byrow=TRUE))
-}
-## 1,2-order derivatives of alpha
-d2lldalpha2_BR.C <- function(w, lambda, K){
-  C <- dim(lambda)[2]
-  dalpha_vec <- .C("d2lldalpha2_Ksites_BR",
-                   as.integer(K),
-                   as.double(t(w)),
-                   as.double(t(lambda)),
-                   as.integer(dim(w)[1]/K),
-                   as.integer(C), 
-                   grad = double((C-1)*K),
-                   hess = double(((C-1)*K)^2))
-  list(grad=dalpha_vec$grad, hess=matrix(dalpha_vec$hess, ncol=(C-1)*K, byrow=TRUE))
-}
-## 2-order derivatives of alpha and beta
-d2lldab2_BR.C <- function(w, lambda, x, K){
-  C <- dim(lambda)[2]
-  numx <- dim(x)[2]
-  d2ab_vec <- .C("d2lldab2_Ksites_BR",
-                 as.integer(K),
-                 as.double(t(w)),
-                 as.double(t(lambda)),
-                 as.double(t(x)),
-                 as.integer(dim(x)[1]/K),
-                 as.integer(C),
-                 as.integer(numx),
-                 hess = double( ((C-1)*numx)*(C-1)*K))
-  hess <- matrix(d2ab_vec$hess, ncol=(C-1)*K, byrow=TRUE)
-  hess
-}
-
-##drt
-probHat_drt.C <- function(w, Y, C, K, w_t, p.last){
-  dim.y <- dim(Y)
-  q <- dim.y[2]
-  n <- dim.y[1]/K
-  numChoices <- apply(Y,2,max)
-  ph_vec <- .C("probhat_drt_Ksites",
-               as.integer(t(Y)),
-               as.integer(K),
-               as.double(p.last),
-               as.double(t(w_t)),
-               as.double(t(w)),
-               as.integer(q),
-               as.integer(n),
-               as.integer(numChoices), 
-               as.integer(C),
-               ph = double(q*C),
-               denom = double(q*C))
-  matrix(ph_vec$ph, ncol=C, byrow=TRUE)
-}
-##x=X1_allsites
-dLL2dBeta_drt.C <- function(w, lambda, lambda_x1, x, x1_allsites, K, tilt) {
-  ## x must be a matrix.
-  C <- dim(lambda)[2]
-  numx <- dim(x)[2]
-  dbeta_vec <-  .C("d2lldbeta2_drt_Ksites",
-                   as.integer(K),
-                   as.double(tilt),
-                   as.double(t(w)),
-                   as.double(t(lambda)),
-                   as.double(t(lambda_x1)),
-                   as.double(t(x)),
-                   as.double(t(x1_allsites)),
-                   as.integer(dim(x)[1]/K),
-                   as.integer(C),
-                   as.integer(numx),
-                   grad = double((C-1)*numx),
-                   hess = double(((C-1)*numx)^2))
-  list(grad=dbeta_vec$grad,hess=matrix(dbeta_vec$hess,ncol=((C-1)*numx),byrow=TRUE))
-}
-d2lldalpha2_drt.C <- function(w, lambda, lambda_x1, K, tilt){
-  C <- dim(lambda)[2]
-  dalpha_vec <- .C("d2lldalpha2_drt_Ksites",
-                   as.integer(K),
-                   as.double(tilt),
-                   as.double(t(w)),
-                   as.double(t(lambda)),
-                   as.double(t(lambda_x1)),
-                   as.integer(dim(w)[1]/K),
-                   as.integer(C), 
-                   grad = double((C-1)*K),
-                   hess = double(((C-1)*K)^2))
-  list(grad=dalpha_vec$grad, hess=matrix(dalpha_vec$hess, ncol=(C-1)*K, byrow=TRUE))
-}
-d2lldab2_drt.C <- function(lambda_x1, x, K, tilt){
-  C <- dim(lambda_x1)[2]
-  numx <- dim(x)[2]
-  d2ab_vec <- .C("d2lldab2_Ksites",
-                 as.integer(K),
-                 as.double(tilt),
-                 as.double(t(lambda_x1)),
-                 as.double(t(x)),
-                 as.integer(dim(x)[1]/K),
-                 as.integer(C),
-                 as.integer(numx),
-                 hess = double( ((C-1)*numx)*(C-1)*K))
-  hess <- matrix(d2ab_vec$hess, ncol=(C-1)*K, byrow=TRUE)
-  hess
-}
-
 lambdaHat.C <- function(w, C, K) {
   dim.w <- dim(w)
   nK <- dim.w[1]
@@ -283,10 +164,7 @@ DistLCR_NR <- function(Y, X, K, C, n, p.initial, alpha.initial, beta.initial, ma
     ## calculate prior class probability lambda
     lambda_y <- class_prior(X, beta.last, alpha.last, K, n)
     
-    ## p_cj (c=1,...,C; j=1,...,q) (assume C=3; q=5)
-    ## pdf.C requires the input probability matrix (P(Y|Z)) to be:
-    ## 1-p_11, p_11; 1-p_21, p_21; 1-p_31, p_31; 1-p_12, p_12;...,1-p_32, p_32;...; 1-p_35, p_35; 
-    p.last_vec <- as.vector(t(p.last))
+   p.last_vec <- as.vector(t(p.last))
     p.last.0.1 <- cbind(1-p.last_vec,p.last_vec)
     
     ## w_kic
@@ -347,12 +225,8 @@ DistLCR_NR <- function(Y, X, K, C, n, p.initial, alpha.initial, beta.initial, ma
   }
   ## Calculate the optimal loglikelihood
   lambda_y <- class_prior(X, beta.last, alpha.last, K, n)
-  ## p_cj (c=1,...,C; j=1,...,q) (assume C=3; q=5)
-  ## pdf.C requires the input probability matrix (P(Y|Z)) to be:
-  ## 1-p_11, p_11; 1-p_21, p_21; 1-p_31, p_31; 1-p_12, p_12;...,1-p_32, p_32;...; 1-p_35, p_35; 
-  p.last_vec <- as.vector(t(p.last))
+   p.last_vec <- as.vector(t(p.last))
   p.last.0.1 <- cbind(1-p.last_vec,p.last_vec)
-  ## All .C function need Y=1,2,...
   pdf.y <- pdf.C(p.last.0.1, Y+1, C, K)
   ## loglikelihood(Y)
   loglike_ki <- log(as.vector((pdf.y * lambda_y) %*% rep(1,C)))
@@ -414,6 +288,7 @@ DistLCR <- function(Y, X, K, C, n, p.initial=NULL, alpha.initial=NULL, beta.init
   list(fit = fit.best, llik=llik, alpha.initial=alpha.initial, beta.initial=beta.initial, p.initial=p.initial)
 }
 
+########################################################
 ## categorical data, different sample site across sites
 pdf_cat.C <- function(vp, y, C, K, n_k){
   
@@ -502,8 +377,7 @@ unvectorize <- function(vp) {
 DistLCA <- function(formula, data, K, C=2, n_k, nrep=1, maxit=1000, tol=1e-3, verbose=TRUE){
   
   mframe <- model.frame(formula, data, na.action = NULL)
-  ## model.frame {stats}: return a data.frame with the variables needed to 
-  ## use formula and any ... arguments.
+ 
   Y <- model.response(mframe)
   q <- dim(Y)[2]
   numChoices <- apply(Y,2,max)

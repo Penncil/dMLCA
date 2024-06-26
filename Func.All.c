@@ -164,18 +164,13 @@ void d2lldbeta2_Ksites(int *numSite, double *rgivy, double *prior, double *x, in
             //Diagonal block elements of the hessian
             hess[row*crank+col] += x[m]*x[k]*
               ( -prior[j]*(1.0-prior[j]) ) ;
-            //In poLCA:
-            //hess[row*crank+col] += x[m]*x[k]*
-            //( -rgivy[j]*(1.0-rgivy[j]) +
-            //prior[j]*(1.0-prior[j]) ) ;
+          
             for (n=0;n<j;n++) {
               col = n*cxcols + m;
               //Subdiagonal elements of the hessian
               hess[row*crank+col] += x[m]*x[k]*
                ( prior[j]*prior[n] );
-              //In poLCA:
-              //hess[row*crank+col] += x[m]*x[k]*
-                //( rgivy[j]*rgivy[n] - prior[j]*prior[n] );
+            
             }
           }
         }
@@ -235,7 +230,6 @@ int *classes, double *grad, double *hess) {
         //Diagonal block elements of the hessian
         hess[row*crank+row] += -prior[j]*(1.0-prior[j]);
       }
-    // Copy the upper elements of the symetric off-diag blocks.
     for (j=0;j<(cclasses-1);j++) {
       for (m=0;m<j;m++) {
         col = (cclasses-1)*s + j;

@@ -5,7 +5,7 @@
 source("dMLCA.R")
 
 DataGenerator <- function(K, C, n ,q, alpha, beta, wright.F=c(0.01,0.02,0.04), p_y = NULL){
-  ## wright.F from Dr.Chen's paper 2020
+ 
   N <- K*n
   ## X
   X1 <- rbinom(N , 1, 0.5)
@@ -23,7 +23,7 @@ DataGenerator <- function(K, C, n ,q, alpha, beta, wright.F=c(0.01,0.02,0.04), p
   }
   class_c <- apply(lambda, 1, function(x) which(rmultinom(1,1,x)==1)) ## faster ???
   Y <- matrix(rbinom(q*N, 1, p_y[,class_c]), N, q, byrow=TRUE)
-  ## Y <- t(matrix(rbinom(q*n*K, 1, p_y[,class_c]), q, n*K))
+
   ## Output in the form of a (n*K) by q matrix
   ## columns are in the order: n obs on site 1, n obs on site 2, ..., n obs on site K.
   list(Y=Y, X=X, p_y=p_y,
