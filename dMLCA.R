@@ -432,11 +432,6 @@ DistLCA <- function(formula, data, K, C=2, n_k, nrep=1, maxit=1000, tol=1e-3, ve
     lambda_y <- lambda.last[rep(1:K, n_k),]
     loglike_ki <- log(as.vector((pdf.y * lambda_y) %*% rep(1,C)))
     loglike <- sum(loglike_ki)
-    if (nrep > 1 & verbose) {
-      cat("Model ", rep, ": llik = ", loglike,
-          " ... best llik = ", max(loglike,loglike0), "\n", sep = "")
-      flush.console()
-    }
     if(loglike > loglike0){
       p.opt <- p.last
       lambda.opt <- lambda.last

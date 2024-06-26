@@ -1,7 +1,4 @@
-## example to run dMLCA with covariates as in the simulation
-## Step 1: generate simulated data 
-## Step 2: run dMLCA
-
+## example to run dMLCA 
 source("dMLCA.R")
 
 DataGenerator <- function(K, C, n ,q, alpha, beta, wright.F=c(0.01,0.02,0.04), p_y = NULL){
@@ -30,12 +27,14 @@ DataGenerator <- function(K, C, n ,q, alpha, beta, wright.F=c(0.01,0.02,0.04), p
        class_y=class_c, lambda_y=lambda)
 }
 
+## with covariates
+## Step 1: generate simulated data 
+## Step 2: run dMLCA
 ## Set true value of the parameters
 C <- 3
 K <- 5
 q <- 5
 n <- 500
-
 
 beta <- matrix(c(0.5, 1, 0, 1, 0, 0, 0.5, -1, 0), 3, C, byrow=TRUE)
 lambda_0 <- matrix(c(15, 20, 65, 34, 33, 33, 50, 25, 25, 65, 20, 15, 10, 15, 75)/100, K, C, byrow=TRUE)
@@ -46,6 +45,17 @@ Data <- DataGenerator(K, C, n ,q, alpha, beta, wright.F=c(0.01,0.02,0.04), p_y =
 Y <- Data$Y
 X <- Data$X
 p0 <- Data$p_y
-result <- DistLCR(Y, X, K, C, n,
-                  maxit=1000, tol=1e-3,
-                  initial = "random", rep = 5)
+result <- DistLCR(Y, X, K, C, n, maxit=1000, tol=1e-3, initial = "random", rep = 5)
+
+## without covariates
+beta <- matrix(0, 3, C, byrow=TRUE)
+
+Data <- DataGenerator(K, C, n ,q, alpha, beta, wright.F=c(0.01,0.02,0.04), p_y = p0)
+Y <- data.frame(Data$Y)
+for (i in 1:q) {Y[,i]=factor(Y[,i])}
+
+colnames(Y) <- c('A','B','C','D','E')
+fmla <- as.formula(paste('cbind(',paste(colnames(Y),collapse = ','),')~1'))
+
+result <- DistLCA(formula=fmla, data=Y, K=K, C=C, n_k=rep(n,K), nrep=5, maxit=10000, tol=1e-6)
+
