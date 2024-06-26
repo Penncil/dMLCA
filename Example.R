@@ -2,7 +2,7 @@
 ## Step 1: generate simulated data 
 ## Step 2: run dMLCA
 
-source("dMLCA_x.R")
+source("dMLCA.R")
 
 DataGenerator <- function(K, C, n ,q, alpha, beta, wright.F=c(0.01,0.02,0.04), p_y = NULL){
   ## wright.F from Dr.Chen's paper 2020
