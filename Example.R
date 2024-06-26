@@ -2,13 +2,7 @@
 ## Step 1: generate simulated data 
 ## Step 2: run dMLCA
 
-class_prior <- function(X, beta, alpha, K, n){
-  temp1 <- X %*% beta + alpha[rep(seq_len(K), each = n), ]
-  temp1 <- pmin(temp1, 7)
-  temp1 <- pmax(temp1, -7)
-  temp1 <- exp(temp1)
-  temp1/as.vector(temp1 %*% rep(1,C))
-}
+source("dMLCA_x.R")
 
 DataGenerator <- function(K, C, n ,q, alpha, beta, wright.F=c(0.01,0.02,0.04), p_y = NULL){
   ## wright.F from Dr.Chen's paper 2020
